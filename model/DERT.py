@@ -52,9 +52,3 @@ class dert():
         
         return class_out,box_out
     
-        
-
-input_img = tf.placeholder(shape=[None,256,256,3],dtype=tf.float32)
-DERT = dert(input_img,True,2,100,1,1)
-class_out,box_out = DERT.get_dert_model()
-print(class_out,box_out)
