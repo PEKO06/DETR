@@ -1,6 +1,38 @@
 import tensorflow as tf
 import numpy as np
 
+
+def match_loss(x):
+    class_label,bbox_label,class_logit,bbox_logit = x
+    print('class_label',class_label)
+    print('bbox_label',bbox_label)
+    print('class_logit',class_logit)
+    print('bbox_logit',bbox_logit)
+    class_loss = list()
+    box_loss = list()
+    for i in range(class_logit.shape[0]):
+        cs_ls = list()
+        bx_ls = list()
+        for j in range(class_logit.shape[0]):
+            cs_ls.append(tf.reduce_sum(tf.pow(class_logit[i]-class_label[j],2)))
+            bx_ls.append(tf.reduce_sum(tf.pow(class_logit[i]-class_label[j],2)))
+        class_loss.append(tf.concat(tf.expand_dims(cs_ls,axis=0),axis=-1))
+        box_loss.append(tf.concat(tf.expand_dims(bx_ls,axis=0),axis=-1))
+    class_loss = tf.concat(class_loss,axis=0)
+    box_loss = tf.concat(box_loss,axis=0)
+    
+    total_loss = list()
+    for i in range(class_loss.shape[0]):
+        a = tf.argmin(class_loss[i])
+        b = tf.constant(np.ones([10,1],dtype=np.float32)*10000)
+        total_loss.append(tf.expand_dims(class_loss[i][a]+(box_loss[i][a]*class_label[a][1]),axis=-1))
+        class_loss = tf.concat([class_loss[:,:a],b,class_loss[:,a+1:]],axis=-1)
+    total_loss = tf.concat(total_loss,axis=-1)
+    total_loss = tf.reduce_sum(total_loss)
+    print('total_loss',total_loss)
+    
+    return [class_label,bbox_label,class_logit,total_loss]
+
 class resnet:
     def __init__(self,input_x,trainable):
         
